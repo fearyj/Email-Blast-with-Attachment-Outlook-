@@ -1,27 +1,17 @@
-import pandas as pd #go terminal to install pandas "pip install pandas"
-import win32com.client as win32  #go terminal to install win32 "pip install pip install pywin32"
+import pandas as pd  # Ensure pandas is installed with "pip install pandas"
+import win32com.client as win32  # Ensure pywin32 is installed with "pip install pywin32"
 import os
-from docx import Document #"pip install python-docx" 
+from docx import Document  # Ensure python-docx is installed with "pip install python-docx"
 import base64
-from lxml import etree #"pip install lxml"
-
-#REQUIREMENTS
-#1. Word docx containing the contents of the email blast (e.g. Invitation Email Blast.docx)
-#2. Excel Spreadsheet containing all the intended receipients (e.g. NTU Heritage Club Membership List.xlsx)
-#3. Attachment pdf file (e.g. Constitution 2024.pdf)
-#4. All the required modules as stated in the import area
-#5. Outlook app must be open!!!
-#6. Remember to rename the items with "***""
-#7. Make sure this python script, the word doc, the pdf file, the excel sheet are in the same folder in your local
-#8. For spacing between each line, please "ENTER" 2 times instead of once to show 1 line of spacing
+from lxml import etree  # Ensure lxml is installed with "pip install lxml"
 
 # Load your Excel file
-excel_file = "contacts.xlsx" #*** This should be named as the name of the excel sheet (e.g.: "NTU Heritage Club Membership List.xlsx")
+excel_file = "contacts.xlsx"  # Update with the actual name of the Excel sheet
 df = pd.read_excel(excel_file)
 
 # Paths to the Word document and PDF document
-word_doc_path = "email_content.docx" #*** This should be named as the name of the word doc (e.g.: "Invitation Email Blast.docx")
-pdf_doc_path = "attachment.pdf"#*** This should be named as the name of the pdf file (e.g.: "(e.g. Constitution 2024.pdf)")
+word_doc_path = "Email.docx"  # Update with the actual name of the Word doc
+pdf_doc_path = "attachment.pdf"  # Update with the actual name of the PDF file
 
 # Function to extract text, images, and hyperlinks from a Word document
 def extract_text_images_links(doc_path):
@@ -41,10 +31,15 @@ def extract_text_images_links(doc_path):
                     content_parts.append(f'<a href="{href}">{link_text}</a>')
             elif child.tag.endswith('}r'):
                 # Handling regular text and inline images
-                for node in child.iter():
+                run = child
+                run_text = ''
+                bold = False
+                highlight = None
+
+                for node in run.iter():
                     if node.tag.endswith('}t'):
                         # Text node
-                        content_parts.append(node.text)
+                        run_text += node.text
                     elif node.tag.endswith('}blip'):
                         # Inline image node
                         rId = node.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed")
@@ -54,6 +49,20 @@ def extract_text_images_links(doc_path):
                             img_b64 = base64.b64encode(image).decode('utf-8')
                             img_html = f'<img src="data:image/{img_format};base64,{img_b64}" />'
                             content_parts.append(img_html)
+                    elif node.tag.endswith('}b'):
+                        # Bold text
+                        bold = True
+                    elif node.tag.endswith('}highlight'):
+                        # Highlighted text
+                        highlight = node.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val")
+
+                if run_text:
+                    if bold:
+                        run_text = f'<b>{run_text}</b>'
+                    if highlight:
+                        # Applying yellow highlight color for simplicity; adjust as needed
+                        run_text = f'<span style="background-color: yellow;">{run_text}</span>'
+                    content_parts.append(run_text)
 
         # Add a line break after each paragraph
         content_parts.append('<br>')
@@ -64,17 +73,22 @@ def extract_text_images_links(doc_path):
 for index, row in df.iterrows():
     content_parts = []
     content_parts.append(f"Dear {row['Name']},<br><br>")
+    content_parts.append(f"Thank you for indicating your interest in joining <b>NTU Heritage Club Recruitment Drive 2024!</b><br><br>")
+    content_parts.append(f"The following is the details for your <b>allocated timeslot</b> for the interviews:<br>")
+    content_parts.append(f"Date:<b>26th August 2024</b><br>")
+    content_parts.append(f"Timeslot:<b>{row['Time']}</b><br>") #*** Make sure your excel sheet has 'Time' Column
+    content_parts.append(f"Venue: <b> NS TR+3 </b>for registration<br><br>") #*** Can edit this to include anything you want (e.g.: Zoom Link)
     # Extract the email body content with inline images and hyperlinks
     content_parts.append(extract_text_images_links(word_doc_path))
     email_body_html = ''.join(content_parts)
 
-    recipient_name = row['Name'] #***Make sure your excel sheet column name is "Name"
-    recipient_email = row['Email'] #***Make sure your excel sheet column name is "Email"
+    recipient_name = row['Name']  # Ensure your Excel sheet column name is "Name"
+    recipient_email = row['Email']  # Ensure your Excel sheet column name is "Email"
 
     # Initialize Outlook and send the email
     outlook = win32.Dispatch('outlook.application')
     mail = outlook.CreateItem(0)
-    mail.Subject = "Subject of the Email" #*** What is the title of the email to be sent
+    mail.Subject = "Test Code"  #*** Update with the actual subject of the email
     mail.To = recipient_email
 
     # Set the HTML body of the email
@@ -88,4 +102,4 @@ for index, row in df.iterrows():
     mail.Send()
     print(f"Email sent to {recipient_name} at {recipient_email}")
 
-print("All emails have been sent.") # This is to check whether all emails have been sent
+print("All emails have been sent.")

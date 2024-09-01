@@ -1,10 +1,10 @@
 #REQUIREMENTS
 
-#1. Word docx containing the contents of the email blast (e.g. Invitation Email Blast.docx)
+#1. Word docx containing the contents of the email blast (e.g. xxx.docx)
 
-#2. Excel Spreadsheet containing all the intended receipients (e.g. NTU Heritage Club Membership List.xlsx)
+#2. Excel Spreadsheet containing all the intended receipients (e.g. xxx.xlsx)
 
-#3. Attachment pdf file (e.g. Constitution 2024.pdf)
+#3. Attachment pdf file (e.g. xxx.pdf)
 
 #4. All the required modules as stated in the import area
 
